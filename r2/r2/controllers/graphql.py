@@ -19,82 +19,53 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from __future__ import absolute_import
-
 from pylons import request, response
 from pylons import app_globals as g
 from pylons.i18n import _, ungettext
-from pylons import tmpl_context as c
 
 from r2.controllers.reddit_base import MinimalController, RedditController
 
 
-from graphql.execution import ExecutionResult
-from graphql.error import format_error as format_graphql_error
-from graphql.error import GraphQLError
-
-from r2.lib.base import abort
-from r2.lib.pages import BoringPage, GraphQL, Password
+from r2.lib.pages import BoringPage, GraphQL as GraphQLPage
 from r2.lib.csrf import csrf_exempt
-from r2.lib import utils
 from r2.lib.graphql import schema
-import json
 
-from r2.lib.validator import *
+from pylons_graphql import GraphQL
 
-# class GraphQLController(MinimalController):
-class GraphQLController(RedditController):
-    # def pre(self):
-    #     pass
 
-    # def post(self):
-    #     pass
-    @staticmethod
-    def format_error(error):
-        if isinstance(error, GraphQLError):
-            return format_graphql_error(error)
-
-        return {'message': str(error)}
-
-    def get_context(self):
-        return c
-
-    def execute(self, *args, **kwargs):
-        response = {}
-        try:
-            result = schema.execute(*args, **kwargs)
-        except Exception as e:
-            result = ExecutionResult(errors=[e], invalid=True)
-
-        response['data'] = result.data
-        if result.errors:
-            response['errors'] = map(self.format_error, result.errors)
-        
-        return json.dumps(response)
+class GraphQLController(GraphQL(RedditController)):
+    schema = schema
 
     def GET_graphql(self):
-        response.content_type = "text/json"
-
-        return self.execute(
-            request.params.get('query', ''),
-            context_value=self.get_context(),
-        )
+        self.dispatch_request()
 
     @csrf_exempt
     def POST_graphql(self):
-        response.content_type = "text/json"
-
-        data = request.json_body
-        return self.execute(
-            data.get("query", "") or "",
-            operation_name=data.get("operationName"),
-            variable_values=data.get("variables"),
-            context_value=self.get_context(),
-        )
+        return self.dispatch_request()
 
     def GET_explorer(self):
+        data = self.parse_body(request)
+        result, status_code = self.get_response(request, data, True)
+        query, variables, operation_name, id = self.get_graphql_params(request, data)
+
+        # return self.render_graphiql(
+        #     graphiql_version=self.graphiql_version,
+        #     graphiql_template=self.graphiql_template,
+        #     query=query,
+        #     variables=variables,
+        #     graphql_url='/api/graphql',
+        #     operation_name=operation_name,
+        #     result=result
+        # )
+
         return BoringPage(_("graphql explorer"),
-            content=GraphQL(),
+            content=GraphQLPage(
+                query=query,
+                variables=variables,
+                graphql_url='/api/graphql',
+                operation_name=operation_name,
+                result=result,
+            ),
             show_sidebar=False,
             show_infobar=False
         ).render()

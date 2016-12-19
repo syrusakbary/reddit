@@ -21,16 +21,37 @@
 ###############################################################################
 
 <% from r2.lib.template_helpers import static %>
-<link rel="stylesheet" href="${static('graphql.css')}" type="text/css" />
-
 <%!
    from r2.lib import js
    import simplejson
 %>
 
+<link rel="stylesheet" href="${static('graphql.css')}" type="text/css" />
+${unsafe(js.use('graphql'))}
+
 <div id="graphql-wrapper">
   <h1>Reddit GraphQL API</h1>
   <div id="graphql-explorer"></div>
 </div>
+<script>
+  function d(val) {
+    return decodeURIComponent(val.replace(/\+/g,  " ")).replace(/&quot;/g, '"');
+  }
 
-${unsafe(js.use('graphql'))}
+  window.r.graphql.init({
+    graphqlUrl: d("${thing.graphql_url | u}"),
+    % if thing.query:
+    query: d("${thing.query | u}"),
+    % endif
+    % if thing.result:
+    response: d("${thing.result | u}"),
+    % endif
+    % if thing.variables:
+    variables: d("${thing.variables | u}"),
+    % endif
+    % if thing.operation_name:
+    operationName: d("${thing.operation_name | u}"),
+    % endif
+  })
+</script>
+
