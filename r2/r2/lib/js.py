@@ -691,6 +691,15 @@ module["sponsored"] = LocalizedModule("sponsored.js",
 )
 
 
+module["graphql"] = LocalizedModule("graphql.js",
+    "lib/fetch.min.js",
+    "lib/react.min.js",
+    "lib/react-dom.min.js",
+    "lib/graphiql.min.js",
+    "graphqlexplorer.js"
+)
+
+
 module["timeseries"] = Module("timeseries.js",
     "lib/jquery.flot.js",
     "lib/jquery.flot.time.js",

@@ -371,6 +371,9 @@ def make_map(config):
        requirements=dict(action="options|over18|unlogged_options|optout"
                          "|optin|login|reg|explore_settings"))
 
+
+    mc("/api/graphql", controller="graphql", action="graphql")
+
     mc('/api', controller='redirect', action='redirect', dest='/dev/api')
     mc('/api/distinguish/:how', controller='api', action="distinguish")
     mc('/api/spendcreddits', controller='ipn', action="spendcreddits")
@@ -450,6 +453,7 @@ def make_map(config):
     mc("/api/v1/gold/give/:username", controller="apiv1gold", action="give")
 
     mc('/dev', controller='redirect', action='redirect', dest='/dev/api')
+    mc('/dev/graphql-explorer', controller='graphql', action='explorer')
     mc('/dev/api', controller='apidocs', action='docs')
     mc('/dev/api/:mode', controller='apidocs', action='docs',
        requirements=dict(mode="oauth"))

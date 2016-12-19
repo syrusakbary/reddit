@@ -5817,3 +5817,7 @@ class GeotargetNotice(Templated):
 
 class ShareClose(Templated):
     pass
+
+
+class GraphQL(Templated):
+    pass
