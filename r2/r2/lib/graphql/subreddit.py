@@ -1,6 +1,6 @@
 import graphene
 
-from r2.models.subreddit import Subreddit as SubredditModel
+from r2.models.subreddit import Subreddit as SubredditModel, FakeSubreddit
 from r2.lib.graphql.node import Node
 from r2.lib.graphql.user import User
 
@@ -25,10 +25,11 @@ class Subreddit(graphene.ObjectType):
 
     @staticmethod
     def is_type_of(root, context, info):
-        return isinstance(root, SubredditModel)
+        return isinstance(root, (SubredditModel, FakeSubreddit))
 
     def resolve_id(self, args, context, info):
         return self._fullname
 
     def resolve_moderators(self, args, context, info):
-        return map(Account._byID, self.moderators)
+        moderators = getattr(self, 'moderators', [])
+        return map(Account._byID, moderators)
