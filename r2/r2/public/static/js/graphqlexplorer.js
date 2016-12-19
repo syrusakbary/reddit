@@ -10,7 +10,7 @@ window.location.search.substr(1).split('&').forEach(function (entry) {
 
 // Produce a Location query string from a parameter object.
 function locationQuery(params) {
-  return '/api/graphql?' + Object.keys(params).map(function (key) {
+  return '?' + Object.keys(params).map(function (key) {
     return encodeURIComponent(key) + '=' +
       encodeURIComponent(params[key]);
   }).join('&');
@@ -33,7 +33,7 @@ var fetchURL = locationQuery(otherParams);
 
 // Defines a GraphQL fetcher using the fetch API.
 function graphQLFetcher(graphQLParams) {
-  return fetch(fetchURL, {
+  return fetch('/api/graphql' + fetchURL, {
     method: 'post',
     headers: {
       'Accept': 'application/json',
