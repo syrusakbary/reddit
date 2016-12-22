@@ -19,35 +19,40 @@
 # All portions of the code written by reddit are Copyright (c) 2006-2015 reddit
 # Inc. All Rights Reserved.
 ###############################################################################
-from pylons import request, response
-from pylons import app_globals as g
-from pylons.i18n import _, ungettext
+from pylons import request
+from pylons.i18n import _
 
-from r2.controllers.reddit_base import MinimalController, RedditController
+from r2.controllers.reddit_base import RedditController
 
 
 from r2.lib.pages import BoringPage, GraphQL as GraphQLPage
 from r2.lib.csrf import csrf_exempt
 from r2.lib.graphql import schema
 
-from pylons_graphql import GraphQL
+from pylons_graphql import GraphQLController
 
 
-class GraphQLController(GraphQL(RedditController)):
+class GraphQLController(GraphQLController, RedditController):
     schema = schema
+    auto_execute_query = False
 
     def GET_graphql(self):
-        self.dispatch_request()
+        self.dispatch_request(request)
 
     @csrf_exempt
     def POST_graphql(self):
-        return self.dispatch_request()
+        return self.dispatch_request(request)
 
     def GET_explorer(self):
         data = self.parse_body(request)
-        result, status_code = self.get_response(request, data, True)
+        if self.auto_execute_query:
+            result, status_code = self.get_response(request, data, True)
+        else:
+            result = ''
+            status_code = 200
         query, variables, operation_name, id = self.get_graphql_params(request, data)
 
+        variables = variables and self.json_encode(request, variables, True)
         # return self.render_graphiql(
         #     graphiql_version=self.graphiql_version,
         #     graphiql_template=self.graphiql_template,

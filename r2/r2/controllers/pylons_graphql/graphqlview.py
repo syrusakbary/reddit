@@ -68,13 +68,16 @@ class GraphQLController(object):
     def get_executor(self, request):
         return self.executor
 
-    def dispatch_request(self):
+    def index(self):
+        return self.dispatch_request(request)
+
+    def dispatch_request(self, request):
         try:
             if request.method.lower() not in ('get', 'post'):
                 raise MethodNotAllowed(['GET', 'POST'], 'GraphQL only supports GET and POST requests.')
 
             data = self.parse_body(request)
-            show_graphiql = self.graphiql and self.can_display_graphiql(data)
+            show_graphiql = self.graphiql and self.can_display_graphiql(request, data)
 
             if self.batch:
                 responses = [self.get_response(request, entry) for entry in data]
@@ -89,7 +92,7 @@ class GraphQLController(object):
                     graphiql_version=self.graphiql_version,
                     graphiql_template=self.graphiql_template,
                     query=query,
-                    variables=variables,
+                    variables=variables and self.json_encode(request, variables, True),
                     operation_name=operation_name,
                     result=result
                 )
@@ -114,6 +117,7 @@ class GraphQLController(object):
         query, variables, operation_name, id = self.get_graphql_params(request, data)
 
         execution_result = self.execute_graphql_request(
+            request,
             data,
             query,
             variables,
@@ -184,7 +188,7 @@ class GraphQLController(object):
     def execute(self, *args, **kwargs):
         return execute(self.schema, *args, **kwargs)
 
-    def execute_graphql_request(self, data, query, variables, operation_name, show_graphiql=False):
+    def execute_graphql_request(self, request, data, query, variables, operation_name, show_graphiql=False):
         if not query:
             if show_graphiql:
                 return None
@@ -225,7 +229,7 @@ class GraphQLController(object):
             return ExecutionResult(errors=[e], invalid=True)
 
     @classmethod
-    def can_display_graphiql(cls, data):
+    def can_display_graphiql(cls, request, data):
         raw = 'raw' in request.params or 'raw' in data
         return not raw and cls.request_wants_html(request)
 
@@ -265,10 +269,3 @@ class GraphQLController(object):
         # We use mimetype here since we don't need the other
         # information provided by content_type
         return request.content_type
-
-
-def GraphQL(BaseController):
-    class GraphQLWithController(GraphQLController, BaseController):
-        pass
-
-    return GraphQLWithController

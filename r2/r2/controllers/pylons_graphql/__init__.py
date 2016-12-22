@@ -1,3 +1,3 @@
-from .graphqlview import GraphQL, GraphQLController
+from .graphqlview import GraphQLController
 
-__all__ = ['GraphQL', 'GraphQLController']
+__all__ = ['GraphQLController']
