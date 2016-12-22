@@ -1,8 +1,8 @@
 import json
 
 import six
-from pylons import Response, request, tmpl_context as c
 
+from webob import Response
 from graphql import Source, execute, parse, validate
 from graphql.error import format_error as format_graphql_error
 from graphql.error import GraphQLError
@@ -27,7 +27,7 @@ class MethodNotAllowed(HttpError):
     status_code = 405
 
 
-class GraphQLController(object):
+class GraphQLBase(object):
     schema = None
     executor = None
     root_value = None
@@ -39,10 +39,12 @@ class GraphQLController(object):
     middleware = None
     batch = False
 
+    response_class = Response
+
     methods = ['GET', 'POST', 'PUT', 'DELETE']
 
     def __init__(self, **kwargs):
-        super(GraphQLController, self).__init__()
+        super(GraphQLBase, self).__init__()
         for key, value in kwargs.items():
             if hasattr(self, key):
                 setattr(self, key, value)
@@ -97,14 +99,14 @@ class GraphQLController(object):
                     result=result
                 )
 
-            return Response(
+            return self.response_class(
                 result,
                 status=status_code,
                 content_type='application/json'
             )
 
         except HttpError as e:
-            return Response(
+            return self.response_class(
                 self.json_encode(request, {
                     'errors': [self.format_error(e)]
                 }),
